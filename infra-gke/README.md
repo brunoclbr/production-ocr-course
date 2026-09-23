@@ -28,42 +28,19 @@ The cluster is zonal by design. A regional GKE cluster can create `--num-nodes` 
 zone and requires scarce GPU capacity in multiple zones. Pinning the cluster to a zone
 known to offer both GPU types keeps the node count and quota behavior predictable.
 
-## 1. Create and activate a Google Cloud account
-
-1. Create an account at <https://cloud.google.com/free>.
-2. Create a project in the Cloud Console and record its immutable **project ID**.
-3. Link a billing account and **activate/upgrade the account out of Free Trial**. Trial
-   projects cannot receive GPU quota. Remaining trial credit is retained after upgrade.
-4. Ensure your identity can enable project services and create VPC, IAM, Artifact
-   Registry, GKE, and Filestore resources. Project Owner is sufficient for a personal
-   course project; organizations should grant narrower administrative roles.
-
-You can create and link a project from the CLI after installing `gcloud`:
-
-```bash
-export PROJECT_ID="your-globally-unique-project-id"
-export BILLING_ACCOUNT_ID="XXXXXX-XXXXXX-XXXXXX"
-
-gcloud projects create "$PROJECT_ID" --name="SLM OCR Course"
-gcloud billing accounts list
-gcloud billing projects link "$PROJECT_ID" --billing-account="$BILLING_ACCOUNT_ID"
-gcloud billing projects describe "$PROJECT_ID"
-```
-
-If the project already exists, skip `gcloud projects create`.
-
-## 2. Install the local tools
+## 1. Install the local tools
 
 ### macOS (Homebrew)
 
 ```bash
 brew update
-brew install --cask google-cloud-sdk docker
+brew install --cask gcloud-cli docker
 brew install terraform kubectl helm
 ```
 
-Start Docker Desktop once after installation. If `kubectl` later reports that the GKE
-auth plugin is missing, install it with:
+The `gcloud-cli` cask installs the Google Cloud CLI distribution, including `gcloud`,
+`gsutil`, and `bq`. Start Docker Desktop once after installation. If `kubectl` later
+reports that the GKE auth plugin is missing, install it with:
 
 ```bash
 gcloud components install gke-gcloud-auth-plugin
@@ -96,6 +73,30 @@ kubectl version --client
 helm version
 docker version
 ```
+
+## 2. Create and activate a Google Cloud account
+
+1. Create an account at <https://cloud.google.com/free>.
+2. Create a project in the Cloud Console and record its immutable **project ID**.
+3. Link a billing account and **activate/upgrade the account out of Free Trial**. Trial
+   projects cannot receive GPU quota. Remaining trial credit is retained after upgrade.
+4. Ensure your identity can enable project services and create VPC, IAM, Artifact
+   Registry, GKE, and Filestore resources. Project Owner is sufficient for a personal
+   course project; organizations should grant narrower administrative roles.
+
+Alternatively, create and link the project with the Google Cloud CLI:
+
+```bash
+export PROJECT_ID="your-globally-unique-project-id"
+export BILLING_ACCOUNT_ID="XXXXXX-XXXXXX-XXXXXX"
+
+gcloud projects create "$PROJECT_ID" --name="SLM OCR Course"
+gcloud billing accounts list
+gcloud billing projects link "$PROJECT_ID" --billing-account="$BILLING_ACCOUNT_ID"
+gcloud billing projects describe "$PROJECT_ID"
+```
+
+If the project already exists, skip `gcloud projects create`.
 
 ## 3. Authenticate and select the project
 

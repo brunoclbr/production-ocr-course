@@ -185,6 +185,7 @@ cython_debug/
 *.tfstate
 *.tfstate.*
 *.tfplan
+**/tfplan
 *.tfvars
 !*.tfvars.example
 .terraformrc
