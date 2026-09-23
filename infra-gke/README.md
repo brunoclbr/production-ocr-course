@@ -288,15 +288,18 @@ helm upgrade --install prometheus prometheus-community/kube-prometheus-stack \
 
 ## 9. Provision model storage and ingest weights
 
-The existing PVC requests the GKE `standard-rwx` StorageClass. This provisions a
-**1 TiB Filestore instance**, which has a significant minimum monthly cost and does not
-scale to zero with GPU pools.
+The PVC manifest creates a `filestore-standard-rwx` StorageClass connected to the
+cluster's custom VPC, then provisions a **1 TiB Filestore instance**. Filestore has a
+significant minimum monthly cost and does not scale to zero with GPU pools. If you
+changed `cluster_name` from `gke-ocr-cluster`, update the StorageClass `network` in
+`pvc.yaml` to `${cluster_name}-network` before applying it.
 
 ```bash
 kubectl apply -f k8s/gke/infra/provisioning/pvc.yaml
-kubectl wait pvc/model-weights-pvc --for=jsonpath='{.status.phase}'=Bound --timeout=15m
+kubectl wait pvc/model-weights-pvc --for=jsonpath='{.status.phase}'=Bound --timeout=30m
 
 kubectl apply -f k8s/gke/infra/provisioning/ingest-job.yaml
+kubectl wait pod -l job-name=model-weight-ingest --for=condition=Ready --timeout=15m
 kubectl logs -f job/model-weight-ingest
 kubectl wait job/model-weight-ingest --for=condition=complete --timeout=60m
 kubectl delete job model-weight-ingest
@@ -395,6 +398,6 @@ the project after Terraform completes is the strongest final cost stop.
 | GPU pool creation fails immediately | Regional GPU quota is still zero or too low. |
 | GPU pod stays Pending | Inspect Pod events; quota or live zonal capacity is usually the cause. |
 | Node exists but has no `nvidia.com/gpu` | Check GKE GPU driver installer pods in `kube-system` and node events. |
-| PVC stays Pending | Confirm Filestore API and CSI add-on, then inspect `kubectl describe pvc`. |
+| PVC stays Pending or the Pod reports `FailedMount` | Confirm the Filestore API and CSI add-on, verify the StorageClass `network` matches the cluster VPC, then inspect `kubectl describe pvc` and `kubectl describe pod`. |
 | Image pull is denied | Confirm the node service account has Artifact Registry Reader and the image prefix matches the Terraform output. |
 | `terraform destroy` cannot remove the network | A Filestore instance or forwarding rule still uses the subnet; delete Kubernetes PVCs/load balancers and retry. |
